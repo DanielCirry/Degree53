@@ -3,22 +3,23 @@ using Degree53.DataLayer.Contracts;
 using Degree53.DataLayer.DbContexts;
 using Degree53.DataLayer.Entities;
 using Degree53.DataLayer.Repositories;
+using Degree53.Domain.Contracts;
 using Degree53.Domain.Models;
 using Degree53.Domain.Services;
 using FakeItEasy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
 namespace Degree53.Tests
 {
     public class Degree53ControllerIntegrationTests
-    {
+    {      
         [Fact]
-        public async void GetPostsAsync_HasData_RetunsOK()
+        public async void GetPostsAsync_HasData_RetunsCorrectData()
         {
             //Given
             var postDetail1 = new PostDetail
@@ -26,11 +27,11 @@ namespace Degree53.Tests
                 Id = 1,
                 NumbersOfViews = 1,
                 CreationDate = new DateTimeOffset(),
+                PostId = 1
             };
 
             var post1 = new Post
             {
-                //Without specify 1, it complaints has it is asseting 1 against 0
                 Id = 1,
                 Title = "This is a nice Title",
                 Content = "Some awesome Content here",
@@ -42,6 +43,7 @@ namespace Degree53.Tests
                 Id = 2,
                 NumbersOfViews = 2,
                 CreationDate = new DateTimeOffset(),
+                PostId = 2
             };
 
             var post2 = new Post
@@ -52,212 +54,172 @@ namespace Degree53.Tests
                 PostDetail = postDetail2
             };
 
-            var options = MakeDbContext();
-            using (var context = new Degree53DbContext(options))
-            {
-                context.Posts.Add(MakePost(post1));
-                context.Posts.Add(MakePost(post2));
-                context.SaveChanges();
-            }
-            using (var context = new Degree53DbContext(options))
-            using (var repository = new Degree53Repository(context))
-            {
-                var controller = MakeController(repository);
+            var repository = MakeRepository();
+            A.CallTo(() => repository.GetPostsAsync()).Returns(new List<Post> {post1, post2});
+            var service = MakeService(repository);
+            
+            //When
+            var result = await service.GetPostsAsync();
 
-                //When
-                var result = await controller.GetPostsAsync();
-
-                //Then
-                Assert.IsType<OkObjectResult>(result);
-                Assert.True(context.Posts.Any(p => p.Id == post1.Id));
-                Assert.True(context.Posts.Any(p => p.Id == post2.Id));
-            }
+            //hen
+            Assert.Contains(result, p => p.Id == post1.Id || p.Id == post2.Id);
+            Assert.Contains(result, p => p.Title == post1.Title || p.Title == post2.Title);
+            Assert.Contains(result, p => p.Content == post1.Content || p.Content == post2.Content);
+            Assert.Contains(result, p => p.PostDetail.Id == post1.PostDetail.Id || p.PostDetail.Id == post2.PostDetail.Id);
+            Assert.Contains(result, p => p.PostDetail.PostId == post1.PostDetail.PostId || p.PostDetail.PostId == post2.PostDetail.PostId);
+            Assert.Contains(result, p => p.PostDetail.CreationDate == post1.PostDetail.CreationDate || p.PostDetail.CreationDate == post2.PostDetail.CreationDate);
+            Assert.Contains(result, p => p.PostDetail.NumberOfViews == post1.PostDetail.NumbersOfViews || p.PostDetail.NumberOfViews == post2.PostDetail.NumbersOfViews);
         }
 
         [Fact]
-        public async void GetPostsAsync_NoData_RetunsNotFound()
+        public async void GetPostsAsync_NoData_RetunsNull()
         {
             //Given
-            var options = MakeDbContext();
+            List<Post> returnValue = null;
 
-            using (var context = new Degree53DbContext(options))
-            using (var repository = new Degree53Repository(context))
-            {
-                var controller = MakeController(repository);
+            var repository = MakeRepository();
+            A.CallTo(() => repository.GetPostsAsync()).Returns(returnValue);
+            var service = MakeService(repository);
 
-                //When
-                var result = await controller.GetPostsAsync();
+            //When
+            var result = await service.GetPostsAsync();
 
-                //Then
-                Assert.IsType<NotFoundResult>(result);
-            }
+            //hen
+            Assert.Null(result);
         }
 
         [Fact]
-        public async void GetPostAsync_HasData_RetunsOK()
+        public async void GetPostAsync_HasData_RetunsData()
         {
             //Given
-            var postDetail = new PostDetail
+            var postDetail1 = new PostDetail
             {
-                Id = 3,
-                NumbersOfViews = 3,
+                Id = 1,
+                NumbersOfViews = 1,
                 CreationDate = new DateTimeOffset(),
+                PostId = 1
             };
 
-            var post = new Post
+            var post1 = new Post
             {
-                Id = 3,
+                Id = 1,
                 Title = "This is a nice Title",
                 Content = "Some awesome Content here",
-                PostDetail = postDetail
+                PostDetail = postDetail1
             };
 
-            var options = MakeDbContext();
-            using (var context = new Degree53DbContext(options))
-            {
-                context.Posts.Add(MakePost(post));
-                context.SaveChanges();
-            }
-            using (var context = new Degree53DbContext(options))
-            using (var repository = new Degree53Repository(context))
-            {
-                var controller = MakeController(repository);
+            var repository = MakeRepository();
+            A.CallTo(() => repository.GetPostAsync(1)).Returns(post1);
+            var service = MakeService(repository);
 
-                //When
-                var result = await controller.GetPostAsync(3);
+            //When
+            var result = await service.GetPostAsync(1);
 
-                //Then
-                Assert.IsType<OkObjectResult>(result);
-                Assert.True(context.Posts.Any(p => p.Id == post.Id));
-                Assert.True(context.Posts.Any(p => p.PostDetail == post.PostDetail));
-                Assert.True(context.Posts.Any(p => p.PostDetail.Id == post.PostDetail.Id));
-            }
+            //hen
+            Assert.Equal(post1.Id, result.Id);
+            Assert.Equal(post1.Title,result.Title);
+            Assert.Equal(post1.Content, result.Content);
+            Assert.Equal(post1.PostDetail.Id, result.PostDetail.Id);
+            Assert.Equal(post1.PostDetail.PostId, result.PostDetail.PostId);
+            Assert.Equal(post1.PostDetail.CreationDate, result.PostDetail.CreationDate);
+            Assert.Equal(post1.PostDetail.NumbersOfViews, result.PostDetail.NumberOfViews);
         }
 
         [Fact]
-        public async void GetPostAsync_NoData_RetunsNotFound()
-        {
-            //Given    
-            var options = MakeDbContext();
-
-            using (var context = new Degree53DbContext(options))
-            using (var repository = new Degree53Repository(context))
-            {
-                var controller = MakeController(repository);
-
-                //When
-                var result = await controller.GetPostAsync(3);
-
-                //Then
-                Assert.IsType<NotFoundResult>(result);
-            }
-        }
-
-        [Fact]
-        public async void AddPostAsync_ValidData_RetunsOK()
+        public async void GetPostAsync_NoData_RetunsNull()
         {
             //Given
-            var postDetail = new PostDetail
-            {
-                Id = 4,
-                NumbersOfViews = 4,
-                CreationDate = new DateTimeOffset(),
-            };
+            Post returnValue = null;
 
-            var post = new Post
-            {
-                Id = 4,
-                Title = "This is a nice Title",
-                Content = "Some awesome Content here",
-                PostDetail = postDetail
-            };
+            var repository = MakeRepository();
+            A.CallTo(() => repository.GetPostAsync(1)).Returns(returnValue);
+            var service = MakeService(repository);
 
-            var postModel = MakePostModel(post);
+            //When
+            var result = await service.GetPostAsync(1);
 
-            var options = MakeDbContext();
-
-            using (var context = new Degree53DbContext(options))
-            using (var repository = new Degree53Repository(context))
-            {
-                var controller = MakeController(repository);
-
-                //When
-                var result = await controller.AddPostAsync(postModel);
-
-                //Then
-                Assert.IsType<OkResult>(result);
-                Assert.True(context.Posts.Any(p => p.Id == post.Id));
-                Assert.True(context.Posts.Any(p => p.PostDetail == post.PostDetail));
-                Assert.True(context.Posts.Any(p => p.PostDetail.Id == post.PostDetail.Id));
-            }
+            //hen
+            Assert.Null(result);
         }
 
         [Fact]
-        public async void AddPostAsync_InvalidData_RetunsBadRequest()
+        public async void AddPostAsync_ValidData_CreatesData()
         {
             //Given
-            var postDetail = new PostDetail
+            var postDetail1 = new PostDetail
             {
-                Id = 4,
-                NumbersOfViews = 4,
+                Id = 0,
+                NumbersOfViews = 1,
                 CreationDate = new DateTimeOffset(),
+                PostId = 1
             };
 
-            var post = new Post
+            var post1 = new Post
             {
-                Id = 4,
+                Id = 0,
                 Title = "This is a nice Title",
                 Content = "Some awesome Content here",
-                PostDetail = postDetail
+                PostDetail = postDetail1
             };
 
-            var postModel = MakePostModel(post);
+            var model = MakePostModel(post1);
 
-            var options = MakeDbContext();
+            var repository = MakeRepository();
+            A.CallTo(() => repository.AddPostAsync(post1));
+            var service = MakeService(repository);
 
-            using (var context = new Degree53DbContext(options))
-            using (var repository = new Degree53Repository(context))
-            {
-                var controller = MakeController(repository);
+            //When
+            await service.AddPostAsync(model);
 
-                //When
-                var result = await controller.AddPostAsync(postModel);
-
-                //Then
-                Assert.IsType<OkResult>(result);
-                Assert.True(context.Posts.Any(p => p.Id == post.Id));
-                Assert.True(context.Posts.Any(p => p.PostDetail == post.PostDetail));
-                Assert.True(context.Posts.Any(p => p.PostDetail.Id == post.PostDetail.Id));
-            }
+            //hen
+            A.CallTo(() => repository.GetPostAsync(0)).Returns(post1);
+            var result = await service.GetPostAsync(0);
+            Assert.Equal(post1.Id, result.Id);
+            Assert.Equal(post1.Title, result.Title);
+            Assert.Equal(post1.Content, result.Content);
+            Assert.Equal(post1.PostDetail.Id, result.PostDetail.Id);
+            Assert.Equal(post1.PostDetail.PostId, result.PostDetail.PostId);
+            Assert.Equal(post1.PostDetail.CreationDate, result.PostDetail.CreationDate);
+            Assert.Equal(post1.PostDetail.NumbersOfViews, result.PostDetail.NumberOfViews);
         }
+
+        [Fact]
+        public async void AddPostAsync_InvalidData_DoesntCreateData()
+        {
+            //Given
+            List<Post> returnValue = null;
+            PostModel postModel = null;
+
+            var repository = MakeRepository();
+            A.CallTo(() => repository.GetPostsAsync()).Returns(returnValue);
+            var service = MakeService(repository);
+
+            //When
+            await service.AddPostAsync(postModel);
+            var result = await service.GetPostsAsync();
+
+            //hen
+            Assert.Null(result);
+        }
+
 
         #region Test Helpers
 
-        private static DbContextOptions<Degree53DbContext> MakeDbContext()
+        private static IDegree53Repository MakeRepository()
         {
-            return new DbContextOptionsBuilder<Degree53DbContext>()
-                .EnableSensitiveDataLogging()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
+            return A.Fake<IDegree53Repository>();
         }
 
-        private static Degree53Controller MakeController(IDegree53Repository repository, bool modelIsInvalid = false)
+        private static Degree53Service MakeService(IDegree53Repository repository)
         {
-            var degree53Service = new Degree53service(repository);
-            var controller = new Degree53Controller(degree53Service);
-            var validator = A.Fake<IObjectModelValidator>();
-            controller.ObjectValidator = validator;
-
-            //I have tried to test a wrong model but it didn't work, maybe my configuration is wrong and i get 200Ok back
-            if (modelIsInvalid)
-                controller.ModelState.AddModelError("model", "InvalidModel");
-
-            return controller;
+            return new Degree53Service(repository);
         }
+
         private static PostModel MakePostModel(Post post)
         {
             return (PostModel)MakePost(post);
         }
+
         private static Post MakePost(Post post)
         {
             return new Post

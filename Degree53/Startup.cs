@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -71,7 +70,7 @@ namespace Degree53
                 options.AddDegree53Policy(Degree53AuthorizationPolicy.ElevatedRights);
             });
 
-            services.AddScoped<IDegree53Service, Degree53service>();
+            services.AddScoped<IDegree53Service, Degree53Service>();
             services.AddScoped<IDegree53Repository, Degree53Repository>();
             services.AddDbContext<Degree53DbContext>(o => o.UseSqlServer(_configuration.GetConnectionString("Degree53DataConnection")));
 

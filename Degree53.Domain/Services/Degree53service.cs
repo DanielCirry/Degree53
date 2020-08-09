@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace Degree53.Domain.Services
 {
-    public class Degree53service : IDegree53Service
+    public class Degree53Service : IDegree53Service
     {
         private readonly IDegree53Repository _repository;
 
-        public Degree53service(IDegree53Repository repository)
+        public Degree53Service(IDegree53Repository repository)
         {
             _repository = repository;
         }

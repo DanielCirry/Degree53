@@ -12,6 +12,7 @@ namespace Degree53.Domain.Models
             return new PostModel
             {
                 Id = post.Id,
+                Title = post.Title,
                 Content = post.Content,
                 PostDetail = (PostDetailModel)post.PostDetail
             };
