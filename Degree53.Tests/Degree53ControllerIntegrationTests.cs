@@ -1,19 +1,17 @@
 ﻿using Degree53.Controllers;
+using Degree53.DataLayer.Contracts;
+using Degree53.DataLayer.DbContexts;
 using Degree53.DataLayer.Entities;
+using Degree53.DataLayer.Repositories;
 using Degree53.Domain.Models;
 using Degree53.Domain.Services;
 using FakeItEasy;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Xunit;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Degree53.DataLayer.Contracts;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Degree53.DataLayer.DbContexts;
-using Degree53.DataLayer.Repositories;
+using System;
+using System.Linq;
+using Xunit;
 
 namespace Degree53.Tests
 {
@@ -141,7 +139,7 @@ namespace Degree53.Tests
         {
             //Given    
             var options = MakeDbContext();
-     
+
             using (var context = new Degree53DbContext(options))
             using (var repository = new Degree53Repository(context))
             {
@@ -249,7 +247,7 @@ namespace Degree53.Tests
             var controller = new Degree53Controller(degree53Service);
             var validator = A.Fake<IObjectModelValidator>();
             controller.ObjectValidator = validator;
-            
+
             //I have tried to test a wrong model but it didn't work, maybe my configuration is wrong and i get 200Ok back
             if (modelIsInvalid)
                 controller.ModelState.AddModelError("model", "InvalidModel");

@@ -1,7 +1,6 @@
 ﻿using Degree53.DataLayer.Entities;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Degree53.DataLayer.Contracts

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Degree53.Authorization;
 using Degree53.Configurations;
 using Degree53.DataLayer.Contracts;
@@ -15,16 +10,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Degree53
 {
@@ -78,16 +73,7 @@ namespace Degree53
 
             services.AddScoped<IDegree53Service, Degree53service>();
             services.AddScoped<IDegree53Repository, Degree53Repository>();
-            //var connectionString = Configuration.GetSection("ConnectionStrings")["Degree53ConnectionString"];
-
             services.AddDbContext<Degree53DbContext>(o => o.UseSqlServer(_configuration.GetConnectionString("Degree53DataConnection")));
-
-            // services.AddDbContext<Degree53DbContext>((Action<DbContextOptionsBuilder>)(o =>
-            //{
-            //    Action<DbContextOptionsBuilder> configureDbContext = this.ConfigureDbContext;
-            //    configureDbContext(o);
-
-            //}), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             services.AddSwaggerGen(c =>
             {
@@ -137,14 +123,6 @@ namespace Degree53
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Degree53");
                 c.RoutePrefix = string.Empty;
             });
-        }
-
-        protected virtual Action<DbContextOptionsBuilder> ConfigureDbContext
-        {
-            get
-            {
-                return (Action<DbContextOptionsBuilder>)(o => o.UseSqlServer(Configuration.GetConnectionString("Degree53ConnectionString"), (Action<SqlServerDbContextOptionsBuilder>)null));
-            }
         }
     }
 }

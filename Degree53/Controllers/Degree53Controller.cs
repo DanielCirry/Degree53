@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Degree53.ControllersBase;
+﻿using Degree53.ControllersBase;
 using Degree53.Domain.Contracts;
 using Degree53.Domain.Models;
 using Degree53.TokensAuthorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace Degree53.Controllers
 {

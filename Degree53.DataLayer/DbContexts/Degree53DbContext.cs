@@ -1,8 +1,5 @@
 ﻿using Degree53.DataLayer.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Degree53.DataLayer.DbContexts
 {

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Degree53.DataLayer.Repositories
@@ -28,7 +27,7 @@ namespace Degree53.DataLayer.Repositories
 
         public async Task<Post> GetPostAsync(int id)
         {
-            return await _context.Posts.Where( p => p.Id == id)
+            return await _context.Posts.Where(p => p.Id == id)
                 .Include(d => d.PostDetail)
                 .FirstOrDefaultAsync();
         }
@@ -53,7 +52,7 @@ namespace Degree53.DataLayer.Repositories
             GC.SuppressFinalize(this);
         }
 
-        private void Dispose( bool disposing)
+        private void Dispose(bool disposing)
         {
             if (_disposed)
                 return;

@@ -1,7 +1,5 @@
 ﻿using Degree53.DataLayer.Entities;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Degree53.Domain.Models
 {

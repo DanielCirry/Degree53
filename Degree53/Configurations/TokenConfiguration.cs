@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Degree53.Configurations
+﻿namespace Degree53.Configurations
 {
     public class TokenConfiguration
     {
