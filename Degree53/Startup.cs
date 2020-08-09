@@ -1,31 +1,42 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Degree53.Authorization;
+using Degree53.Configurations;
 using Degree53.DataLayer.Contracts;
 using Degree53.DataLayer.DbContexts;
 using Degree53.DataLayer.Repositories;
 using Degree53.Domain.Contracts;
 using Degree53.Domain.Services;
+using Degree53.TokensAuthorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 namespace Degree53
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
+
+        public virtual Action<AuthorizationOptions> ConfigureAuthorization { get; }
 
         public IConfiguration Configuration { get; }
 
@@ -33,12 +44,72 @@ namespace Degree53
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            var tokenConfig = _configuration.GetSection("Token");
+            services.Configure<TokenConfiguration>(tokenConfig);
+            var config = tokenConfig.Get<TokenConfiguration>();
+
+            services.AddAuthentication(o =>
+            {
+                o.DefaultAuthenticateScheme = o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                .AddJwtBearer(jwtBearerOptions =>
+                {
+                    jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        SaveSigninToken = true,
+                        ClockSkew = TimeSpan.FromMinutes(1),
+                        ValidateIssuer = true,
+                        ValidateActor = false,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = config.Issuer,
+                        ValidAudience = config.Audience,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config.Key))
+                    };
+                });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddDegree53Policy(Degree53AuthorizationPolicy.User);
+                options.AddDegree53Policy(Degree53AuthorizationPolicy.ElevatedRights);
+            });
+
             services.AddScoped<IDegree53Service, Degree53service>();
             services.AddScoped<IDegree53Repository, Degree53Repository>();
-            services.AddDbContext<Degree53DbContext>(o => o.UseSqlServer(Configuration.GetConnectionString("Degree53ConnectionString")));
+            //var connectionString = Configuration.GetSection("ConnectionStrings")["Degree53ConnectionString"];
+
+            services.AddDbContext<Degree53DbContext>(o => o.UseSqlServer(_configuration.GetConnectionString("Degree53DataConnection")));
+
+            // services.AddDbContext<Degree53DbContext>((Action<DbContextOptionsBuilder>)(o =>
+            //{
+            //    Action<DbContextOptionsBuilder> configureDbContext = this.ConfigureDbContext;
+            //    configureDbContext(o);
+
+            //}), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Degree53", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                {
+                    new OpenApiSecurityScheme {
+                        Reference = new OpenApiReference {
+                            Id = "Bearer",
+                            Type = ReferenceType.SecurityScheme
+                        }
+                    }, new List<string>()
+                }
+            });
+                c.DescribeAllParametersInCamelCase();
             });
         }
 
@@ -54,6 +125,7 @@ namespace Degree53
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -65,6 +137,14 @@ namespace Degree53
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Degree53");
                 c.RoutePrefix = string.Empty;
             });
+        }
+
+        protected virtual Action<DbContextOptionsBuilder> ConfigureDbContext
+        {
+            get
+            {
+                return (Action<DbContextOptionsBuilder>)(o => o.UseSqlServer(Configuration.GetConnectionString("Degree53ConnectionString"), (Action<SqlServerDbContextOptionsBuilder>)null));
+            }
         }
     }
 }

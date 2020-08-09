@@ -43,7 +43,6 @@ namespace Degree53.Domain.Services
             {
                 var postDetail = new PostDetail
                 {
-                    Id = postModel.PostDetail.Id,
                     CreationDate = postModel.PostDetail.CreationDate,
                     PostId = postModel.PostDetail.PostId,
                     NumbersOfViews = postModel.PostDetail.NumberOfViews
@@ -51,7 +50,6 @@ namespace Degree53.Domain.Services
 
                 var post = new Post
                 {
-                    Id = postModel.Id,
                     Title = postModel.Title,
                     Content = postModel.Content,
                     PostDetail = postDetail
