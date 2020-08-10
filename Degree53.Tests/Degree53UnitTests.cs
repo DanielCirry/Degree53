@@ -16,7 +16,7 @@ using Xunit;
 
 namespace Degree53.Tests
 {
-    public class Degree53UnitTests
+    public class Degree53ControllerIntegrationTests
     {      
         [Fact]
         public async void GetPostsAsync_HasData_RetunsCorrectData()

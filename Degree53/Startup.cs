@@ -96,6 +96,15 @@ namespace Degree53
             });
                 c.DescribeAllParametersInCamelCase();
             });
+
+            services.AddCors(options =>
+            options.AddPolicy("myPolicy",
+            builder =>
+            {
+                builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().Build();
+            }));
+
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -106,9 +115,9 @@ namespace Degree53
                 app.UseDeveloperExceptionPage();
             }
 
-
-            app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCors("MyPolicy");
+           // app.UseHttpsRedirection();
             app.UseAuthorization();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>

@@ -2,6 +2,7 @@
 using Degree53.Domain.Contracts;
 using Degree53.Domain.Models;
 using Degree53.TokensAuthorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -15,6 +16,7 @@ namespace Degree53.Controllers
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [EnableCors("MyPolicy")]
     public class Degree53Controller : Degree53ControllerBase
     {
         private readonly IDegree53Service _service;
